@@ -1,0 +1,525 @@
+<?xml version="1.0"?>
+
+<project name="pkg-java" default="build-all" basedir="." xmlns:c="antlib:net.sf.antcontrib">
+    <taskdef uri="antlib:net.sf.antcontrib"
+            resource="net/sf/antcontrib/antlib.xml"
+            classpath="/usr/share/java/ant-contrib.jar"/>
+
+    <!--
+       maven-build.xml - an Ant build script that reproduces the Maven build life-cycle.
+
+       You can use the following properties when launching this script:
+       
+       basedir: you need to supply the basedir, otherwise Ant will use the current location of this script,
+         which is not what you want. For example, use: 
+           DEB_ANT_ARGS := -Dpackage=$(realpath .)
+       package: the name of the source package. For example, use: 
+           DEB_ANT_ARGS := -Dversion=$(DEB_SOURCE_PACKAGE) 
+       bin.package: the name of the binary package. Defaults to lib${package}-java
+       version: DEPRECATED - the version of the project, used in the name of the jar. 
+       debian.dir: the location of the debian directory. Defaults to ${basedir}/debian
+       project.dir: the location of the current project. Defaults to ""
+       pom.name: the name of the pom file. Must appear as it is in the debian/${bin.package}.poms file
+       pom.file: the location of the pom file. Defaults to ${pom.name}
+       maven.generate.target: if set, calls Maven with the given target before compiling code. For example, use
+          maven.generate.target = plugin:generate to generate the plugin descriptor for a Maven plugin.
+       maven.generate.target2: if set, calls Maven with another given target before compiling code. For example, use
+          maven.generate.target2 = org.codehaus.plexus:plexus-component-metadata:${plexus-component-metadata.version}:generate-metadata
+          to generate the Plexus components descriptor.
+       maven.process-classes.target: if set, calls Maven with the given target after compiling the code. For example, use
+          maven.process-classes.target = plugin:generate to generate the plugin descriptor for a Maven plugin using annotations.
+       maven.package.target: if set, calls Maven with the given target after packaging the jar. For example, use
+          maven.target.target = shade:shade to use the shade plugin and repackage the contents of the jar.
+       keep-cleaned-pom: if set, keeps the cleaned pom after packaging. If can be restored later by calling
+          maven-build.xml with the restore-pom target (without the keep-cleaned-pom property set).
+       use-local-repo: if set, then Maven will use a local repository copied from /usr/share/maven-repo into
+          debian/.mh. This allows you to install some custom or intermediate artifacts, handy for multi modules builds.
+       dependency, dependency2, dependency3...: Give the name of the dependent packages. Those packages will be
+          used to form the links to the Javadoc APIs from the generated Javadoc. 
+          The links are of the form: file:///usr/share/doc/${dependency}/api
+          Up to 15 dependencies can be defined here. Example use:
+            dependency=libcommons-lang-java
+            dependency2=libcommons-logging-java
+       javadoc.generate: if set, the default target (build-all) will build the project and generate the Javadoc
+
+       The properties can be defined also in debian/build.properties, and they will override properties
+       defined in /usr/share/maven-ant-helper/maven-defaults.properties.
+
+       If you provide a pom file to your project, or the project already contains a pom file,
+       then it will be read. You need to add /usr/share/java/ant-nodeps.jar to the classpath
+       for this functionality to work.
+ 
+       When using the Maven target, you need to add libmaven3-core-java to Build-Depends, as well as the
+       library containing the Maven plugin to execute (libmaven-plugin-tools-java for plugin:generate, 
+       libplexus-component-metadata-java for org.codehaus.plexus:plexus-component-metadata:generate-metadata)
+     -->
+
+    <property name="bin.package" value="lib${package}-java" />
+    <property name="debian.dir" value="${basedir}/debian" />
+    <property name="project.dir" value="" />
+    <property name="debian.poms" value="${debian.dir}/${bin.package}.poms" />
+    <property file="${debian.dir}/build.properties"/>
+    <property file="/usr/share/maven-ant-helper/maven-defaults.properties"/>
+    <property name="xml-input-factory" value="com.bea.xml.stream.MXParserFactory" />
+    <property name="xml-output-factory" value="com.bea.xml.stream.XMLOutputFactoryBase" />
+
+    <target name="init.pom">
+        <condition property="use-local-repo" value="true">
+            <isset property="maven.package.target" />
+        </condition>
+        <condition property="pom.file" value="pom.xml">
+            <not>
+                <isset property="pom.name" />
+            </not>
+        </condition>
+        <condition property="pom.name" value="pom.xml" else="${project.dir}/pom.xml">
+            <equals arg1="" arg2="${project.dir}" />
+        </condition>
+        <property name="pom.file" value="${pom.name}" />
+        <condition property="available.pom">
+            <and>
+                <available file="${debian.poms}"/>
+                <available file="${pom.file}"/>
+            </and>
+        </condition>
+
+        <echo message="Base dir is ${basedir}" />
+        <echo message="Pom name in ${debian.poms}: ${pom.name}" />
+        <echo message="Pom file ${pom.file} available? ${available.pom}" />
+
+        <path id="repo-helper.classpath">
+          <fileset dir="/usr/share/maven-repo">
+            <include name="org/debian/maven/maven-repo-helper/debian/maven-repo-helper-debian.jar" />
+            <include name="stax/stax-api/debian/stax-api-debian.jar" />
+            <include name="stax/stax/debian/stax-debian.jar" />
+            <include name="xml-apis/xml-apis/debian/xml-apis-debian.jar" />
+          </fileset>
+        </path>
+
+        <path id="maven.classpath">
+          <pathelement location="/usr/share/maven-ant-helper/bootstrap"/>
+          <fileset dir="/usr/share/java">
+            <include name="plexus-classworlds.jar"/>
+            <include name="aopalliance.jar"/>
+            <include name="cdi-api.jar"/>
+            <include name="commons-cli.jar"/>
+            <include name="commons-io.jar"/>
+            <include name="commons-lang3.jar"/>
+            <include name="geronimo-annotation-1.3-spec.jar"/>
+            <include name="guava.jar"/>
+            <include name="guice-no-aop.jar"/>
+            <include name="jansi.jar"/>
+            <include name="atinject-jsr330-api-1.0.jar"/>
+            <include name="jcl-over-slf4j.jar"/>
+            <include name="maven3-artifact.jar"/>
+            <include name="maven3-builder-support.jar"/>
+            <include name="maven3-compat.jar"/>
+            <include name="maven3-core.jar"/>
+            <include name="maven3-embedder.jar"/>
+            <include name="maven3-model.jar"/>
+            <include name="maven3-model-builder.jar"/>
+            <include name="maven3-plugin-api.jar"/>
+            <include name="maven3-repository-metadata.jar"/>
+            <include name="maven-resolver-api.jar"/>
+            <include name="maven-resolver-connector-basic.jar"/>
+            <include name="maven-resolver-impl.jar"/>
+            <include name="maven3-resolver-provider.jar"/>
+            <include name="maven-resolver-spi.jar"/>
+            <include name="maven-resolver-transport-wagon.jar"/>
+            <include name="maven-resolver-util.jar"/>
+            <include name="maven3-settings.jar"/>
+            <include name="maven3-settings-builder.jar"/>
+            <include name="maven-shared-utils.jar"/>
+            <include name="maven3-slf4j-provider.jar"/>
+            <include name="plexus-cipher.jar"/>
+            <include name="plexus-component-annotations.jar"/>
+            <include name="plexus-interpolation.jar"/>
+            <include name="plexus-sec-dispatcher.jar"/>
+            <include name="plexus-utils2.jar"/>
+            <include name="sisu-inject.jar"/>
+            <include name="sisu-plexus.jar"/>
+            <include name="slf4j-api.jar"/>
+            <include name="wagon-file.jar"/>
+            <include name="wagon-http-shaded.jar"/>
+            <include name="wagon-provider-api.jar"/>
+          </fileset>
+        </path>
+
+    </target>
+
+    <!-- /usr/share/java/ant-nodeps.jar must be in the classpath -->
+    <target name="read.pom" depends="init.pom" if="available.pom">
+
+        <loadfile srcfile="${debian.poms}" property="cleaner.options">
+            <filterchain>
+               <linecontainsregexp>
+                   <regexp pattern="^${pom.name}" />
+               </linecontainsregexp>
+               <tokenfilter>
+                 <containsregex
+                     pattern="[^ ]*(.*)"
+                     replace="\1"/>
+               </tokenfilter>
+               <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+        <!-- Default value -->
+        <condition property="cleaner.options" value="">
+            <not>  
+                <isset property="cleaner.options"/>
+            </not>
+        </condition>
+
+        <mkdir dir="${debian.dir}/.mh" /> 
+        <delete>
+           <fileset dir="${debian.dir}/.mh">
+              <include name="pom.xml" />
+              <include name="pom.properties" />
+           </fileset>
+        </delete> 
+
+        <property name="pom.loc" location="${pom.file}" />
+        <c:if>
+            <not><equals arg1="pom.xml" arg2="${pom.name}"/></not>
+            <then>
+                <c:var name="cleaner.options" value="${cleaner.options} --keep-parent-version" />
+            </then>
+        </c:if>
+        <echo message="Cleaner options:${cleaner.options}" />
+
+        <java fork="true" dir="." 
+           classname="org.debian.maven.repo.POMCleaner">
+           <classpath refid="repo-helper.classpath"/>
+           <sysproperty key="javax.xml.stream.XMLInputFactory" value="${xml-input-factory}" />
+           <sysproperty key="javax.xml.stream.XMLOutputFactory" value="${xml-output-factory}" />
+           <arg value="-p${bin.package}" />
+           <arg value="-r${debian.dir}/maven.rules" />
+           <arg value="-i${debian.dir}/maven.publishedRules" />
+           <arg value="--maven-repo=${debian.dir}/.mh/maven-repo" />
+           <arg value="--verbose" />
+           <arg line="${cleaner.options} --keep-pom-version" />
+           <arg value="${pom.loc}" />
+           <arg value="${debian.dir}/.mh/pom.xml" />
+           <arg value="${debian.dir}/.mh/pom.properties" />
+        </java> 
+        <copy file="${pom.file}" tofile="${pom.file}.save" />
+        <!-- force the pom file to be located in the current dir, we'll need it when running Maven plugins -->
+        <copy file="${debian.dir}/.mh/pom.xml" tofile="${pom.file}" overwrite="true" />
+
+        <!-- Read groupId, artifactId, version from the POM file -->
+        <c:var name="groupId" unset="true" /> 
+        <c:var name="artifactId" unset="true" /> 
+        <c:var name="version" unset="true" /> 
+        <c:var name="debianVersion" unset="true" /> 
+        <c:var name="classifier" unset="true" /> 
+        <c:var name="type" unset="true" />
+        <property file="${debian.dir}/.mh/pom.properties"/>
+
+        <pathconvert property="groupPath">
+            <path location="${groupId}"/>
+            <mapper>
+            <chainedmapper>
+                <globmapper from="${basedir}/*" to="*" />
+                <unpackagemapper from="*" to="*"/>
+            </chainedmapper>
+            </mapper>
+        </pathconvert>
+
+        <echo message="Properties read from the POM file:" />
+        <echo message="  groupId: ${groupId}, artifactId: ${artifactId}, version: ${version}, debianVersion: ${debianVersion}" />
+    </target>
+
+    <target name="init" depends="read.pom">
+        <available property="available.sources" file="${build.sourceDirectory}"/>
+        <available property="available.resources" file="${build.resourcesDirectory}"/>
+        <available property="available.testResources" file="${build.testResourcesDirectory}"/>
+        <available property="available.testSources" file="${build.testSourceDirectory}"/>
+
+        <fail unless="artifactId" message="Missing required property: artifactId"/>
+        <fail unless="version" message="Missing required property: version"/>
+        <fail unless="basedir" message="Missing required property: basedir"/>
+
+        <echo message="Compile classpath: ${classpath.full.compile}"/>
+        <echo message="Test classpath: ${classpath.full.test}"/>
+    </target>
+
+    <!--
+     | LIFECYCLE: Clean
+     |-->
+
+    <target name="clean">
+        <delete dir="${build.directory}"/>
+    </target>
+
+    <!--
+     | LIFECYCLE: jar
+     |
+     | This mimics the default Maven build life-cycle: http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
+     |-->
+
+     <target name="process-resources" depends="init" if="available.resources">
+        <mkdir dir="${build.outputDirectory}"/>
+        <copy todir="${build.outputDirectory}">
+            <fileset dir="${build.resourcesDirectory}"/>
+        </copy>
+     </target>
+
+    <target name="process-pom" depends="init" if="available.pom">
+        <mkdir dir="${build.outputDirectory}/META-INF/maven/${groupId}/${artifactId}"/>
+        <copy todir="${build.outputDirectory}/META-INF/maven/${groupId}/${artifactId}">
+            <fileset dir="${debian.dir}/.mh">
+               <include name="pom.xml" />
+               <include name="pom.properties" />
+            </fileset>
+        </copy>
+    </target>
+
+    <macrodef name="run-maven">
+      <attribute name="target"/>
+      <sequential>
+        <java fork="true" dir="." classname="org.apache.maven.cli.MavenCli" failonerror="true">
+          <jvmarg value="-Dmaven.multiModuleProjectDirectory=."/>
+          <jvmarg value="-Xmx256M"/>
+          <classpath refid="maven.classpath"/>
+          <arg value="-Dmaven.compiler.source=${build.javaVersion}"/>
+          <arg value="-Dmaven.compiler.target=${build.javaVersion}"/>
+          <arg value="-Dmaven.plugin.skipErrorNoDescriptorsFound=true"/>
+          <arg value="-Dmaven.test.skip"/>
+          <arg value="--offline"/>
+          <arg value="-e"/>
+          <arg value="-B"/>
+          <arg value="-N"/>
+          <arg value="-s${debian.dir}/maven-settings.xml"/>
+          <arg value="@{target}"/>
+        </java>
+      </sequential>      
+    </macrodef>
+
+    <macrodef name="run-maven-local-repo">
+      <attribute name="target"/>
+      <element name="before-maven" optional="true" />
+      <sequential>
+        <mkdir dir="${debian.dir}/.mh/maven-repo" /> 
+        <copy todir="${debian.dir}/.mh/maven-repo">
+            <fileset dir="/usr/share/maven-repo" />
+        </copy>
+
+        <before-maven/>
+
+        <java fork="true" dir="." classname="org.apache.maven.cli.MavenCli" failonerror="true">
+          <jvmarg value="-Dmaven.multiModuleProjectDirectory=."/>
+          <jvmarg value="-Xmx256M"/>
+          <classpath refid="maven.classpath"/>
+          <arg value="-Dmaven.compiler.source=${build.javaVersion}"/>
+          <arg value="-Dmaven.compiler.target=${build.javaVersion}"/>
+          <arg value="-Dmaven.plugin.skipErrorNoDescriptorsFound=true"/>
+          <arg value="-Dmaven.test.skip"/>
+          <arg value="--offline"/>
+          <arg value="-e"/>
+          <arg value="-B"/>
+          <arg value="-N"/>
+          <arg value="-Dmaven.repo.local=${debian.dir}/.mh/maven-repo"/>
+          <arg value="@{target}"/>
+        </java>
+      </sequential>      
+    </macrodef>
+
+    <target name="mvn-shared-repo" unless="use-local-repo">
+        <!-- Calls mvn ${maven.generate.target} -->
+        <run-maven target="${_target}" />
+    </target>
+    <target name="mvn-local-repo" if="use-local-repo">
+        <!-- Calls mvn ${maven.generate.target} -->
+        <run-maven-local-repo target="${_target}" />
+    </target>
+    <target name="mvn" depends="mvn-shared-repo,mvn-local-repo" />
+
+    <target name="mvn-generate" depends="init" if="maven.generate.target">
+        <antcall target="mvn" inheritRefs="true">
+            <param name="_target" value="${maven.generate.target}" />
+        </antcall> 
+    </target>
+
+    <target name="mvn-generate2" depends="init" if="maven.generate.target2">
+        <antcall target="mvn" inheritRefs="true">
+            <param name="_target" value="${maven.generate.target2}" />
+        </antcall> 
+    </target>
+
+    <target name="compile" depends="process-resources,process-pom,mvn-generate,mvn-generate2" if="available.sources">
+        <mkdir dir="${build.outputDirectory}"/>
+        <mkdir dir="${build.directory}/generated-sources"/>
+        <javac
+            destdir="${build.outputDirectory}"
+            classpath="${classpath.compile}"
+            nowarn="true"
+            source="${build.javaVersion}" target="${build.javaVersion}"
+            debug="on">
+            <src path="${build.sourceDirectory}"/>
+            <src path="${build.directory}/generated-sources"/>
+        </javac>
+    </target>
+
+    <target name="process-classes" depends="compile" if="maven.process-classes.target">
+        <echo message="Processing compiled classes with ${maven.process-classes.target}..."/>
+        <antcall target="mvn" inheritRefs="true">
+            <param name="_target" value="${maven.process-classes.target}" />
+        </antcall>
+    </target>
+
+    <target name="process-test-resources" depends="process-classes" if="available.testResources" unless="maven.test.skip">
+        <mkdir dir="${build.testOutputDirectory}"/>
+        <copy todir="${build.testOutputDirectory}">
+            <fileset dir="${build.testResourcesDirectory}">
+                <exclude name="**/*.java" />
+            </fileset>
+        </copy>
+     </target>
+
+    <target name="test-compile" depends="process-test-resources" if="available.testSources" unless="maven.test.skip">
+        <mkdir dir="${build.testOutputDirectory}"/>
+        <javac
+            destdir="${build.testOutputDirectory}"
+            classpath="${classpath.full.test}"
+            nowarn="true"
+            source="${build.javaVersion}" target="${build.javaVersion}"
+            debug="on">
+            <src path="${build.testSourceDirectory}"/>
+        </javac>
+    </target>
+
+    <target name="test" depends="test-compile" if="available.testSources" unless="maven.test.skip">
+        <mkdir dir="${build.directory}/test-output"/>
+        <junit printsummary="yes" haltonfailure="no"> <!--  fork="yes" forkmode="once" -->
+            <sysproperty key="basedir" value="${basedir}"/>
+            <classpath>
+                <pathelement path="${classpath.full.test}"/>
+            </classpath>
+
+            <formatter type="plain"/>
+            <batchtest todir="${build.directory}/test-output">
+                <fileset dir="${build.testSourceDirectory}">
+                    <include name="**/*Test.java"/>
+                    <exclude name="**/Abstract*"/>
+                    <exclude name="${maven.test.exclude}"/>
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+
+    <target name="jar" depends="test">
+        <jar jarfile="${build.directory}/${artifactId}-${version}.jar"
+            basedir="${build.outputDirectory}"
+            manifest="${manifest}" />
+    </target>
+
+    <target name="mvn-package" depends="jar" if="maven.package.target">
+        <!-- Calls mvn ${maven.package.target} -->
+        <run-maven-local-repo target="${maven.package.target}" />
+    </target>
+
+    <target name="local-install" depends="jar">
+        <mkdir dir="${debian.dir}/.mh/maven-repo/${groupPath}/${artifactId}/${debianVersion}" />
+        <copy file="${pom.file}" tofile="${debian.dir}/.mh/maven-repo/${groupPath}/${artifactId}/${debianVersion}/${artifactId}-${debianVersion}.pom" />
+        <c:if>
+          <or>
+            <equals arg1="${type}" arg2="jar" />
+            <equals arg1="${type}" arg2="bundle" />
+          </or>
+          <then>
+              <copy todir="${debian.dir}/.mh/maven-repo/${groupPath}/${artifactId}/${debianVersion}/">
+                <fileset dir="${build.directory}">
+                    <include name="${artifactId}-${version}.jar"/>
+                </fileset>
+                <regexpmapper from="^(.*)-${version}.jar$$" to="\1-${debianVersion}.jar"/>
+              </copy>
+          </then>
+        </c:if>
+    </target>
+
+    <target name="restore-pom" depends="init.pom" unless="keep-cleaned-pom"> 
+        <!-- restore the pom file -->
+        <copy file="${pom.file}.save" tofile="${pom.file}" overwrite="true"/>
+    </target>
+ 
+    <target name="package" depends="jar,mvn-package,restore-pom" />
+    <target name="package-and-local-install" depends="package,local-install" />
+
+    <target name="build-all" depends="package">
+        <c:if>
+            <isset property="javadoc.generate" />
+            <then>
+                <antcall target="javadoc-jar" />
+            </then> 
+        </c:if>
+    </target>
+
+    <!--
+     | Javadoc
+     |-->
+
+    <target name="javadoc" depends="read.pom">
+        <mkdir dir="${javadoc.dir}"/>
+        <javadoc 
+            source="${build.javaVersion}"
+            sourcepath="${build.sourceDirectory}"
+            destdir="${javadoc.dir}"
+            author="true"
+            version="true"
+            windowtitle="${package} API"
+            doctitle="${package} - ${version}"
+            locale="en"
+            additionalparam="-notimestamp"
+            classpath="${classpath.full.compile}" >
+
+            <packageset dir="${build.sourceDirectory}" defaultexcludes="yes">
+                <include name="**"/>
+            </packageset>
+            <link href="file:///usr/share/doc/default-jdk-doc/api" packagelistLoc="/usr/share/doc/default-jdk/api/" />
+            <link href="file:///usr/share/doc/classpath-doc/api" />
+            <link href="file:///usr/share/doc/${dependency}/api" />
+            <link href="file:///usr/share/doc/${dependency2}/api" />
+            <link href="file:///usr/share/doc/${dependency3}/api" />
+            <link href="file:///usr/share/doc/${dependency4}/api" />
+            <link href="file:///usr/share/doc/${dependency5}/api" />
+            <link href="file:///usr/share/doc/${dependency6}/api" />
+            <link href="file:///usr/share/doc/${dependency7}/api" />
+            <link href="file:///usr/share/doc/${dependency8}/api" />
+            <link href="file:///usr/share/doc/${dependency9}/api" />
+            <link href="file:///usr/share/doc/${dependency10}/api" />
+            <link href="file:///usr/share/doc/${dependency11}/api" />
+            <link href="file:///usr/share/doc/${dependency12}/api" />
+            <link href="file:///usr/share/doc/${dependency13}/api" />
+            <link href="file:///usr/share/doc/${dependency14}/api" />
+            <link href="file:///usr/share/doc/${dependency15}/api" />
+        </javadoc>
+    </target>
+
+    <target name="javadoc-jar" depends="javadoc">
+        <echoxml file="${build.directory}/${artifactId}.javadoc.pom">
+            <project>
+                <modelVersion>4.0.0</modelVersion>
+                <groupId>${groupId}</groupId>
+                <artifactId>${artifactId}</artifactId>
+                <version>${version}</version>
+            </project>
+        </echoxml>
+        <jar jarfile="${build.directory}/${artifactId}.javadoc.jar"
+            basedir="${javadoc.dir}" />
+    </target>
+
+    <target name="local-install-doc" depends="javadoc-jar">
+        <mkdir dir="${debian.dir}/.mh/maven-repo/${groupPath}/${artifactId}/${debianVersion}" />
+        <c:if>
+          <or>
+            <equals arg1="${type}" arg2="jar" />
+            <equals arg1="${type}" arg2="bundle" />
+          </or>
+          <then>
+              <copy tofile="${debian.dir}/.mh/maven-repo/${groupPath}/${artifactId}/${debianVersion}/${artifactId}.javadoc.jar"
+                file="${build.directory}/${artifactId}.javadoc.jar"/>
+          </then>
+        </c:if>
+    </target>
+
+</project>

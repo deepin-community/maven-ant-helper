@@ -1,0 +1,21 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/pkg-info.mk
+
+%:
+	dh $@ --buildsystem=ant
+
+override_dh_auto_build:
+	dh_auto_build -- -f debian/build.xml -DartifactId=$(DEB_SOURCE) -Dpackage=$(DEB_SOURCE) -Dversion=$(DEB_VERSION) -propertyfile debian/build.properties package
+
+override_dh_auto_clean:
+	dh_auto_clean -- -f debian/build.xml -propertyfile debian/build.properties
+
+override_dh_auto_install:
+	dh_install build/$(DEB_SOURCE)-$(DEB_VERSION).jar usr/share/java
+	dh_link usr/share/java/$(DEB_SOURCE)-$(DEB_VERSION).jar usr/share/java/$(DEB_SOURCE).jar
+	dh_installdirs -A usr/share/maven-ant-helper
+	dh_install maven-build.xml usr/share/maven-ant-helper
+	dh_install maven-defaults.properties usr/share/maven-ant-helper
+	dh_install manifest.mf usr/share/maven-ant-helper
+	dh_install bootstrap usr/share/maven-ant-helper

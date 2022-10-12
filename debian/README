@@ -1,0 +1,20 @@
+The Debian Package maven-ant-helper
+-----------------------------------
+
+This package provides helper scripts for anyone packaging Java components
+within Debian. It will be particularly useful when packaging libraries using
+"modello" to generate sources, such as the maven2 system.
+
+It provides two scripts and one ant task:
+
+    * maven-build.xml -- a base build file providing much of the functionality
+                         needed to build Java projects.
+    * maven-defaults.properties -- default properties for the above.
+    * ModelloTask -- provides an "modello" ant task to generate sources
+                     from Modello definitions.
+
+For an example of how to use maven-ant-helper, please see the Debian packaging
+of "doxia".
+
+ -- Trygve Laugstøl <trygvis@inamo.no>  Sun, 27 May 2007 03:30:35 +0200
+ -- Paul Cager <paul-debian@home.paulcager.org>  Wed, 13 Jun 2007 11:03:27 +0100

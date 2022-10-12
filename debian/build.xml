@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<!--
+    This build file is used internally to build the maven-ant-helper package. Unlike
+    ../maven-build.xml, it is not released as part of the binary package.
+-->
+
+<project name="pkg-java" default="package" basedir="..">
+
+    <target name="init">
+        <available property="available.resources" file="src/main/resources"/>
+
+        <fail unless="artifactId" message="Missing required property: artifactId"/>
+        <fail unless="version" message="Missing required property: version"/>
+        <fail unless="basedir" message="Missing required property: basedir"/>
+
+        <echo message="Compile classpath: ${classpath.full.compile}"/>
+        <echo message="Test classpath: ${classpath.full.test}"/>
+    </target>
+
+    <!--
+     | LIFECYCLE: Clean
+     |-->
+
+    <target name="clean">
+        <delete dir="${build.directory}"/>
+    </target>
+
+    <!--
+     | LIFECYCLE: jar
+     |
+     | This mimics the default Maven build life-cycle: http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
+     |-->
+
+     <target name="process-resources" depends="init" if="available.resources">
+        <mkdir dir="${build.outputDirectory}"/>
+        <copy todir="${build.outputDirectory}">
+            <fileset dir="src/main/resources"/>
+        </copy>
+     </target>
+
+    <target name="compile" depends="process-resources">
+        <mkdir dir="${build.outputDirectory}"/>
+        <mkdir dir="${build.directory}/generated-sources"/>
+        <javac
+            destdir="${build.outputDirectory}"
+            classpath="${classpath.compile}"
+            nowarn="true"
+            source="1.4" target="1.4"
+            encoding="ISO-8859-1"
+            debug="on">
+            <src path="${build.sourceDirectory}"/>
+        </javac>
+    </target>
+
+    <target name="package" depends="compile">
+        <jar jarfile="${build.directory}/${artifactId}-${version}.jar"
+            basedir="${build.outputDirectory}"/>
+    </target>
+</project>

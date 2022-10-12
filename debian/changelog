@@ -1,0 +1,317 @@
+maven-ant-helper (8.6) unstable; urgency=medium
+
+  * Team upload.
+  * Depend on the no-aop variant of Guice
+  * Standards-Version updated to 4.5.1
+  * Switch to debhelper level 13
+  * Changed the priority from extra to optional
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Wed, 10 Feb 2021 09:57:35 +0100
+
+maven-ant-helper (8.5) unstable; urgency=medium
+
+  * Team upload.
+  * Added the missing dependency on libstax-java (Closes: #902404)
+  * Use salsa.debian.org Vcs-* URLs
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Tue, 26 Jun 2018 09:53:25 +0200
+
+maven-ant-helper (8.4) unstable; urgency=medium
+
+  * Team upload.
+  * Added geronimo-annotation to the classpath to run on Java 9
+    (Closes: #893343)
+  * Standards-Version updated to 4.1.4
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Fri, 06 Apr 2018 09:48:48 +0200
+
+maven-ant-helper (8.3) unstable; urgency=medium
+
+  * Team upload.
+  * Fixed the build failure with Java 9 (Closes: #893299)
+  * Removed Damien Raude-Morvan from the uploaders (Closes: #889395)
+  * Standards-Version updated to 4.1.3
+  * Switch to debhelper level 11
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Sat, 17 Mar 2018 23:10:20 +0100
+
+maven-ant-helper (8.2) unstable; urgency=medium
+
+  * Team upload.
+  * Updated the Maven classpath
+  * Standards-Version updated to 4.1.1
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Sat, 11 Nov 2017 21:48:36 +0100
+
+maven-ant-helper (8.1) unstable; urgency=medium
+
+  * Team upload.
+  * Switch to the Plexus dependencies used by Maven 3 to run Modello
+  * Standards-Version updated to 4.1.0
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Tue, 05 Sep 2017 12:59:00 +0200
+
+maven-ant-helper (8.0) unstable; urgency=medium
+
+  * Team upload.
+  * Depend on libmaven3-core-java instead of libmaven2-core-java
+  * Build with the DH sequencer instead of CDBS
+  * Standards-Version updated to 4.0.0
+  * Switch to debhelper level 10
+  * Use secure Vcs-* URLs
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Thu, 27 Jul 2017 17:16:19 +0200
+
+maven-ant-helper (7.11) unstable; urgency=medium
+
+  * Team upload.
+  * Improved the reproducibility of the Javadoc: removed the timestamps
+    and use an english locale.
+  * Standards-Version updated to 3.9.6 (no changes)
+  * Moved the package to Git (Closes: #703789)
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Wed, 09 Sep 2015 15:48:19 +0200
+
+maven-ant-helper (7.10) unstable; urgency=medium
+
+  * Team upload.
+  * Add maven-toolchain.jar to the Maven classpath (Closes: #735834)
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Thu, 30 Jan 2014 13:03:39 +0100
+
+maven-ant-helper (7.9) unstable; urgency=low
+
+  * Team upload.
+  * Added a process-classes target to allow the post processing of the compiled
+    classes. This enables the generation of plugin and component descriptors
+    when Java annotations are used instead of Javadoc tags.
+  * Propagate the source/target level set with the javaVersion property to Maven
+  * Removed backport-util-concurrent from the Maven classpath
+  * Updated Standards-Version to 3.9.5 (no changes)
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Fri, 08 Nov 2013 15:11:54 +0100
+
+maven-ant-helper (7.8) unstable; urgency=low
+
+  * Team upload.
+  * Modello Task: Use Guava instead of Google Collections (Closes: #724211)
+  * debian/control:
+    - Updated Standards-Version to 3.9.4 (no changes)
+    - Use canonical URLs for the Vcs-* fields
+    - Removed the duplicate Section field for the binary package
+    - Build depend on debhelper >= 9
+  * Removed the Javadoc link with the OpenJDK 6 documentation
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Tue, 24 Sep 2013 10:41:57 +0200
+
+maven-ant-helper (7.7) unstable; urgency=low
+
+  * Add target local-install-doc to maven-build.xml
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Tue, 24 Jan 2012 23:43:23 +0100
+
+maven-ant-helper (7.6) unstable; urgency=low
+
+  * Better handling of install in local-repo during build (Closes: #652804).
+
+ -- Damien Raude-Morvan <drazzib@debian.org>  Thu, 29 Dec 2011 01:32:56 +0100
+
+maven-ant-helper (7.5) unstable; urgency=low
+
+  * Use Java 1.5 for compiling and source level compatibility
+    by default (Closes: #644941)
+  * Fix issue when test sources are missing and maven.test.skip is not set
+    to true
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Sun, 30 Oct 2011 19:56:27 +0100
+
+maven-ant-helper (7.4) unstable; urgency=low
+
+  [ Ludovic Claude ]
+  * process-test-resources now ignores Java files when copying
+
+  [ Torsten Werner ]
+  * Remove Trydge and Paul from Uploaders list.
+
+ -- Torsten Werner <twerner@debian.org>  Tue, 27 Sep 2011 17:38:59 +0200
+
+maven-ant-helper (7.3) unstable; urgency=low
+
+  * maven-build.xml: Fix read of properties in *.poms files by changing
+    regexp and set cleaner.options only if not already defined.
+    (Closes: #629894).
+  * debian/rules: Remove ant-trax from classpath (doesn't exist anymore since
+    Ant 1.8).
+
+ -- Damien Raude-Morvan <drazzib@debian.org>  Sun, 26 Jun 2011 19:14:05 +0200
+
+maven-ant-helper (7.2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 09 Feb 2011 21:34:32 +0100
+
+maven-ant-helper (7.1) experimental; urgency=low
+
+  [ Ludovic Claude ]
+  * Add a javadoc-jar target which generates a jar file containing the javadoc
+  * Add a default build-all target which can run the build and optionally
+    generate javadoc and its jar if generate.javadoc property is set
+
+  [ Damien Raude-Morvan ]
+  * d/rules: Remove simple-patchsys.mk since d/source/format is 3.0 (native).
+  * d/control, d/compat: Bump debhelper compat level to 7.
+  * d/control: Add myself as Uploaders.
+
+ -- Damien Raude-Morvan <drazzib@debian.org>  Sun, 05 Dec 2010 20:01:13 +0100
+
+maven-ant-helper (7.0) experimental; urgency=low
+
+  * Update Standards-Version to 3.9.1, use source format 3.0 (native)  
+  * Use default-jdk-doc instead of openjdk-6-doc when linking
+    Javadoc files (Closes: #587361)
+  * d/control: add Suggests: default-jdk-doc, move all Recommends: to Suggest
+    as they are not needed except when Maven is called within the Ant build,
+    add maven-repo-helper to Depends as it's now always used from the jar task
+  * maven-build.xml: add -N option to Maven to avoid recursive actions,
+    reorder actions in mvn-package and give to the POMCleaner the location
+    of the local Maven repository which can be used when deciding when to
+    replace a parent version by a its symbolic version (fixes
+    maven-debian-helper build),
+    add local-install and package-and-local-install target to deal with
+    composite projects which need to install some of their build elements in
+    the local repository, for consuption by other parts of the build,
+    deprecate passing the 'version' variable to Ant as it's read from the POM file,
+    remove macro prepare-package-list, update paths to the JDK docs.
+ 
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Thu, 14 Oct 2010 00:08:38 +0200
+
+maven-ant-helper (6.8) unstable; urgency=low
+
+  * Use default-jdk-doc instead of openjdk-6-doc when linking
+    Javadoc files
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Sun, 28 Mar 2010 21:55:57 +0200
+
+maven-ant-helper (6.7) unstable; urgency=low
+
+  * Do no longer <gunzip/> the package-list file from openjdk-6-doc.
+    (Closes: #573660)
+
+ -- Torsten Werner <twerner@debian.org>  Sat, 13 Mar 2010 10:24:35 +0100
+
+maven-ant-helper (6.6) unstable; urgency=low
+
+  * Revert previous change as openjdk6-doc is not required
+    for most builds. Update the affected packages in a
+    separate update.
+  * Bump up Standards-Version to 3.8.3, no changes
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Wed, 02 Sep 2009 21:22:49 +0100
+
+maven-ant-helper (6.5) unstable; urgency=low
+
+  * Add Build-Depends: openjdk-6-doc to fix build errors. (Closes: #543106,
+    #543112, #543115, #543116)
+
+ -- Torsten Werner <twerner@debian.org>  Sun, 23 Aug 2009 10:13:54 +0200
+
+maven-ant-helper (6.4) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Torsten Werner <twerner@debian.org>  Sun, 09 Aug 2009 13:04:01 +0200
+
+maven-ant-helper (6.3) experimental; urgency=low
+
+  * Update Standards-Version to 3.8.2
+  * Add ant and ant-optional to Depends:
+  * Add more Suggest: packages (libmaven-plugin-plugin-java and
+    libplexus-components-metadata-java as they provide useful
+    Maven plugin often used in the build)
+  * Add support for linking generated Javadoc to other 
+    documented libraries.
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Thu, 16 Jul 2009 22:34:35 +0100
+
+maven-ant-helper (6.2) experimental; urgency=low
+
+  * Fix a bug introduced by previous version. It was affecting
+    only the builds which execute a Maven plugin.
+  * Add more workaround to use gcj with maven-ant-helper, this time
+    avoid using gnu xml stream when reading XML documents.
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Wed, 08 Jul 2009 23:41:02 +0100
+
+maven-ant-helper (6.1) unstable; urgency=low
+
+  * Provide a workaround to use gcj with maven-ant-helper
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Tue, 07 Jul 2009 22:46:18 +0100
+
+maven-ant-helper (6) unstable; urgency=low
+
+  * Add support for custom manifest
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Tue, 07 Jul 2009 19:46:22 +0100
+
+maven-ant-helper (5) unstable; urgency=low
+
+  * Change section to java, bump up Standards-Version: 3.8.1.
+  * Add myself to uploaders
+  * Add a Build-Depends-Indep dependency on ${misc:Depends}
+  * Fix ModelloTask to work with modello >= 1.0, add new properties
+    useJava5 and encoding. 
+  * maven-build.xml: add build.javaVersion property to allow
+    building Java 1.5 sources with this script, defaults to 1.4,
+    fix javadoc target to use any packages under the current sources
+  * Change the dependency on java-gcj to default-jdk (Closes: #526298)
+  * Support optional source folders
+  * Use maven-repo-helper to clean and include the pom information
+    into the META-INF folder, as Maven does
+  * Add support for running Maven plugins without using the full Maven
+    program. Great for building core Maven plugins used in the Maven
+    build itself.
+  * Add Recommends on libmaven2-core-java and maven-repo-helper as those
+    are used in optional parts of maven-build.xml
+
+ -- Ludovic Claude <ludovic.claude@laposte.net>  Mon, 30 Mar 2009 18:11:32 +0100
+
+maven-ant-helper (4) experimental; urgency=low
+
+  * Update modello ant task to support the new modello package.
+  * Add myself to Uploaders.
+  * Add Homepage and Vcs headers in debian/control.
+  * Bump up Standards-Version: 3.8.0.
+  * Do no longer quote the full text of the Apache license in
+    debian/copyright.
+  * Add a copyright statement.
+
+ -- Torsten Werner <twerner@debian.org>  Wed, 07 Jan 2009 20:07:51 +0100
+
+maven-ant-helper (3) unstable; urgency=low
+
+  * Changed "Depends: libmodello-java" to a "Recommends".
+    - Some clients may not use the Modello Ant task.
+
+ -- Paul Cager <paul-debian@home.paulcager.org>  Fri, 15 Jun 2007 21:53:48 +0100
+
+maven-ant-helper (2) unstable; urgency=low
+
+  * Initial public release (Closes: #428643)
+  
+  * Changes following review by Michael Koch:
+    - Copyright file changed to follow dh_make's format.
+    - Version number changed to single integer.
+    - Ported to CDBS format.
+    - Created ITP closed by this upload.
+
+  * Added brief usage notes in README.
+
+ -- Paul Cager <paul-debian@home.paulcager.org>  Wed, 13 Jun 2007 11:03:27 +0100
+
+maven-ant-helper (1.0) unstable; urgency=low
+
+  * Initial Release to pkg-java project.
+
+ -- Trygve Laugstol <trygvis@inamo.no>  Sun, 27 May 2007 03:30:35 +0200
